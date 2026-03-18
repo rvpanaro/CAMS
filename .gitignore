@@ -1,0 +1,15 @@
+# Paper companion repo: ignore large/derived artifacts
+
+# Required exclusions
+*.pdf
+**/*.pdf
+*.rds
+**/*.rds
+
+# Common derived / local files
+.DS_Store
+*.Rhistory
+.Rproj.user/
+*.RData
+*.RDataTmp
+
