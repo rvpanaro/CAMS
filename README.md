@@ -18,7 +18,7 @@ The repository mirrors the original materials layout and keeps files at the proj
 - `age_data.csv`, `edss_data.csv`: long-format input data for Age and EDSS.
 - `table2.csv`: output dataset for Table 2.
 
-## Zenodo / self-contained reproduction
+## Self-contained reproduction
 Use **this folder** (`CAMS`) as the reproducibility bundle: zip it for upload (exclude `.git`, `.Rhistory`, and large optional `.rds` caches if you want a smaller archive).
 
 1. Set the R working directory to **`CAMS`** (the folder containing the scripts and CSVs).
@@ -26,7 +26,7 @@ Use **this folder** (`CAMS`) as the reproducibility bundle: zip it for upload (e
 
 **Reproducibility settings** (see scripts): `set.seed(1)`, `seed = 1` in `brm()`, `chains = 4`, `iter = 20000`, `warmup = 6000`, `control = list(adapt_delta = 0.999, max_treedepth = 15)`.
 
-**Manuscript figure → script (matches RSM paper Figure 1–7 order)**
+**Manuscript figure → script (matches manuscript Figure 1–7 order)**
 
 | Figure | Script(s) | Output PDF(s) |
 |--------|------------|---------------|
