@@ -1,5 +1,5 @@
 #
-# Figure 5 center: Ecological effect / aggregation bias assessment.
+# Figure 6 center: Ecological effect / aggregation bias assessment.
 # Self-contained. Requires: edss_data.csv. Reuses fit_overall_edss, fit_subgroup_edss, fit_interaction_edss, fit_edss.
 #
 
@@ -36,25 +36,25 @@ wide_data <- data.frame(
 # ---- Fits (EDSS) ----
 if (file.exists("fit_subgroup_edss.rds")) fit_subgroup <- readRDS("fit_subgroup_edss.rds") else {
   fit_subgroup <- brms::brm(esti | se(se) ~ 1 + subgroup + (-1 + subgroup12 | study.name), data = long_data,
-    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)); saveRDS(fit_subgroup, "fit_subgroup_edss.rds")
 }
 if (file.exists("fit_interaction_edss.rds")) fit_interaction <- readRDS("fit_interaction_edss.rds") else {
   fit_interaction <- brms::brm(contrast.esti | se(contrast.se) ~ 1 + (1 | study.name), data = wide_data,
-    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)); saveRDS(fit_interaction, "fit_interaction_edss.rds")
 }
 if (file.exists("fit_edss.rds")) fit_subgroup_adj <- readRDS("fit_edss.rds") else {
   fit_subgroup_adj <- brms::brm(yi | se(se) ~ 1 + ifrac + subgroup + (1 + ifrac2 || study), data = long_data,
     prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
       prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15))
   saveRDS(fit_subgroup_adj, "fit_edss.rds")
 }
 if (file.exists("fit_overall_edss.rds")) fit_overall <- readRDS("fit_overall_edss.rds") else {
   fit_overall <- brms::brm(overall.esti | se(overall.se) ~ 1 + (1 | study.name), data = wide_data,
-    prior = prior(normal(0, 1), class = sd), chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    prior = prior(normal(0, 1), class = sd), chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)); saveRDS(fit_overall, "fit_overall_edss.rds")
 }
 
@@ -97,4 +97,4 @@ p1 <- ggplot(df_delta, aes(x = x, y = y)) +
   )
 
 print(p1)
-ggsave("figure5_center.pdf", plot = p1, width = 8, height = 7, units = "in")
+ggsave("figure6_center.pdf", plot = p1, width = 8, height = 7, units = "in", device = grDevices::pdf)

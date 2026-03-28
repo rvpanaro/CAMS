@@ -46,8 +46,8 @@ if (file.exists(fit_file_bayes)) {
     prior = brms::prior(normal(0, 1), class ="sd", coef = "Intercept", group = "study") +
       brms::prior(normal(0, 0.5), class = "sd", coef = "ifrac2", group = "study"),
     chains = 4,
-    iter = 4000,
-    warmup = 2000,
+    iter = 20000,
+    warmup = 6000,
     seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )

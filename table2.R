@@ -39,7 +39,7 @@ if (file.exists("fit_edss.rds")) {
     data = long_data,
     prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
       prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_subgroup_adj, "fit_edss.rds")
@@ -59,7 +59,7 @@ if (file.exists("fit_subgroup_edss.rds")) {
     esti | se(se) ~ 1 + subgroup + (-1 + subgroup12 | study.name),
     data = long_data,
     prior = prior(normal(0, 0.5), class = sd),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_subgroup, "fit_subgroup_edss.rds")
@@ -72,7 +72,7 @@ if (file.exists("fit_interaction_edss.rds")) {
     contrast.esti | se(contrast.se) ~ 1 + (1 | study.name),
     data = wide_data,
     prior = prior(normal(0, 0.5), class = sd),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_interaction, "fit_interaction_edss.rds")

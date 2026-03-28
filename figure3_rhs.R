@@ -1,6 +1,6 @@
 #
-# Figure 1 right panel (conditional effects: RR by EDSS vs information fraction).
-# Same as figure1_lhs but for EDSS data. Requires: edss_data.csv. Displays in RStudio Plots tab.
+# Figure 3 right panel (conditional effects: RR by EDSS vs information fraction).
+# Same as figure3_lhs but for EDSS data. Requires: edss_data.csv. Displays in RStudio Plots tab.
 #
 
 if (!file.exists("edss_data.csv")) stop("edss_data.csv not found. Set wd to the project folder.")
@@ -29,7 +29,7 @@ if (file.exists(cache_fit)) {
     data = long_data,
     prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
       prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_subgroup_adj, cache_fit)
@@ -48,7 +48,8 @@ sub_col <- setdiff(names(ce_df), c("ifrac", "estimate__", "se__", "lower__", "up
 sub_col <- sub_col[grepl("subgroup", sub_col, fixed = TRUE)][1L]
 if (is.na(sub_col)) sub_col <- names(ce_df)[2L]
 ce_df$subgroup_f <- ce_df[[sub_col]]
-subgroup_labs <- c("Lower EDSS", "Higher EDSS")
+# Internal levels avoid ASCII ">=" in legend; legend uses plotmath (see scale_*_manual labels).
+subgroup_labs <- c("<3.5", "ge35")
 lvls <- unique(as.character(ce_df$subgroup_f))
 if (length(lvls) >= 2L) {
   ce_df$Subgroup <- factor(as.character(ce_df$subgroup_f), levels = lvls, labels = subgroup_labs[seq_along(lvls)])
@@ -75,10 +76,13 @@ trial_segments <- raw %>%
   summarise(ifrac = ifrac[1], yi_1 = yi[1], yi_2 = yi[2], .groups = "drop")
 
 # Paper colours (same as LHS): red and blue
-paper_clrs <- c("Lower EDSS" = "#FF0000", "Higher EDSS" = "#0000FF")
+paper_clrs <- c("<3.5" = "#FF0000", ge35 = "#0000FF")
 lv <- levels(ce_df$Subgroup)
 clrs <- setNames(paper_clrs[lv], lv)
 if (length(clrs) == 0L) clrs <- c("#FF0000", "#0000FF")
+edss_legend_labels <- lapply(lv, function(lvl) {
+  switch(as.character(lvl), ge35 = expression(phantom() >= 3.5), `<3.5` = expression(phantom() < 3.5), lvl)
+})
 
 p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = Subgroup)) +
   geom_ribbon(aes(ymin = lower__, ymax = upper__), alpha = 0.25, colour = NA) +
@@ -86,14 +90,16 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = S
   geom_line(data = overall_df, aes(x = ifrac, y = estimate__), colour = "black", linewidth = 1.2, linetype = "dashed", inherit.aes = FALSE) +
   geom_segment(data = trial_segments, aes(x = ifrac, xend = ifrac, y = yi_1, yend = yi_2), colour = "grey75", linewidth = 1, inherit.aes = FALSE) +
   geom_point(data = raw, aes(x = ifrac, y = yi, color = Subgroup, size = precision), alpha = 0.35, inherit.aes = FALSE) +
-  scale_color_manual(values = clrs, name = "EDSS", na.value = "grey75") +
-  scale_fill_manual(values = clrs, name = "EDSS", na.value = "grey75") +
+  scale_color_manual(values = clrs, name = "EDSS", na.value = "grey75", labels = edss_legend_labels) +
+  scale_fill_manual(values = clrs, name = "EDSS", na.value = "grey75", labels = edss_legend_labels) +
   scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
-  labs(x = "Information fraction", y = "Relapse rate (RR) by baseline EDSS") +
+  labs(
+    x = expression(Information~fraction~("EDSS" >= 3.5)),
+    y = "Relapse rate (RR) by baseline EDSS"
+  ) +
   scale_x_continuous(breaks = c(0.2, 0.4, 0.6)) +
   scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
   coord_cartesian(xlim = c(0.1, 0.8), ylim = c(-2.5, 0.2)) +
-  # Theme and size: same as figure1_lhs
   theme_classic(base_size = 20, base_family = "sans") +
   theme(
     axis.text = element_text(size = 18),
@@ -110,5 +116,4 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = S
   )
 
 print(p_out)
-# To save at paper size: uncomment:
-# ggsave("figure1_rhs.pdf", plot = p_out, width = 7, height = 7, units = "in")
+ggsave("figure3_rhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)

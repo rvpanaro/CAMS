@@ -1,7 +1,6 @@
 #
-# Figure 6 right: Relapse rate (RR) by baseline EDSS — same as figure3_rhs (conditional
-# effects with 95% CrI). Error bars show subgroup estimates at the optimal prevalence
-# (IF that minimizes total credible interval width). Requires: edss_data.csv. Reuses fit_edss.rds.
+# Figure 6 right: Conditional posterior (gamma | tau) trace plot + tau density.
+# Self-contained. Requires: edss_data.csv. Reuses fit_subgroup_edss, fit_interaction_edss, fit_edss.
 #
 
 if (!file.exists("edss_data.csv")) stop("edss_data.csv not found. Set wd to the project folder.")
@@ -10,128 +9,170 @@ set.seed(1)
 library(brms)
 library(ggplot2)
 library(dplyr)
+library(patchwork)
 
 # ---- Data ----
 long_data <- read.csv("edss_data.csv", stringsAsFactors = FALSE)
 long_data$se <- sqrt(long_data$vi)
 long_data$study <- paste0(long_data$study.acronym, long_data$treatment)
+long_data$study.name <- long_data$study
+long_data$esti <- long_data$yi
+long_data$subgroup12 <- as.numeric(factor(long_data$subgroup)) - 1.5
 if (!"ifrac2" %in% names(long_data)) long_data$ifrac2 <- rep(c(0, 1), nrow(long_data) / 2) - long_data$ifrac
 
-# ---- Fit (EDSS CAMS) ----
-if (file.exists("fit_edss.rds")) {
-  fit_subgroup_adj <- readRDS("fit_edss.rds")
-} else {
-  fit_subgroup_adj <- brms::brm(
-    yi | se(se) ~ 1 + ifrac + subgroup + (1 + ifrac2 || study),
-    data = long_data,
+idx_a <- seq(1L, nrow(long_data), by = 2L)
+idx_b <- seq(2L, nrow(long_data), by = 2L)
+w_va <- long_data$vi[idx_a]
+w_vb <- long_data$vi[idx_b]
+wide_data <- data.frame(
+  study.name = long_data$study.name[idx_a],
+  contrast.esti = long_data$yi[idx_b] - long_data$yi[idx_a],
+  contrast.se = sqrt(w_va + w_vb)
+)
+
+# ---- Fits (EDSS) ----
+if (file.exists("fit_subgroup_edss.rds")) fit_subgroup <- readRDS("fit_subgroup_edss.rds") else {
+  fit_subgroup <- brms::brm(esti | se(se) ~ 1 + subgroup + (-1 + subgroup12 | study.name), data = long_data,
+    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 20000, warmup = 6000, seed = 1,
+    control = list(adapt_delta = 0.999, max_treedepth = 15)); saveRDS(fit_subgroup, "fit_subgroup_edss.rds")
+}
+if (file.exists("fit_interaction_edss.rds")) fit_interaction <- readRDS("fit_interaction_edss.rds") else {
+  fit_interaction <- brms::brm(contrast.esti | se(contrast.se) ~ 1 + (1 | study.name), data = wide_data,
+    prior = prior(normal(0, 0.5), class = sd), chains = 4, iter = 20000, warmup = 6000, seed = 1,
+    control = list(adapt_delta = 0.999, max_treedepth = 15)); saveRDS(fit_interaction, "fit_interaction_edss.rds")
+}
+if (file.exists("fit_edss.rds")) fit_subgroup_adj <- readRDS("fit_edss.rds") else {
+  fit_subgroup_adj <- brms::brm(yi | se(se) ~ 1 + ifrac + subgroup + (1 + ifrac2 || study), data = long_data,
     prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
       prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
-    control = list(adapt_delta = 0.999, max_treedepth = 15)
-  )
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
+    control = list(adapt_delta = 0.999, max_treedepth = 15))
   saveRDS(fit_subgroup_adj, "fit_edss.rds")
 }
 
-# ---- Optimal prevalence (same logic as figure6_lhs) ----
-draws <- as.data.frame(fit_subgroup_adj)
-nms   <- names(draws)
-b_Intercept <- draws[[which(nms == "b_Intercept")]]
-b_ifrac     <- draws[[which(nms == "b_ifrac")]]
-sub_par     <- nms[grepl("subgroup", nms, fixed = TRUE) & startsWith(nms, "b_")][1]
-b_subgroupB <- draws[[sub_par]]
-ifrac_grid  <- seq(0.1, 0.7, length.out = 150)
-total_width <- numeric(length(ifrac_grid))
-for (i in seq_along(ifrac_grid)) {
-  pi_val <- ifrac_grid[i]
-  mean_A <- b_Intercept + b_ifrac * pi_val
-  mean_B <- b_Intercept + b_ifrac * pi_val + b_subgroupB
-  total_width[i] <- diff(quantile(mean_A, c(0.025, 0.975))) + diff(quantile(mean_B, c(0.025, 0.975)))
-}
-optimal_ifrac <- ifrac_grid[which.min(total_width)]
+# ---- Tau posterior for bottom panel ----
+tau_samples <- brms::hypothesis(fit_subgroup_adj, "study__Intercept = 0", class = "sd")$samples |> unlist()
+density_tau <- density(tau_samples, adjust = 3)
+df_tau <- data.frame(x = density_tau$x, y = density_tau$y)
 
-# ---- Estimates at optimal prevalence (for error bars) ----
-mean_A_opt <- b_Intercept + b_ifrac * optimal_ifrac
-mean_B_opt <- b_Intercept + b_ifrac * optimal_ifrac + b_subgroupB
-ci_A <- quantile(mean_A_opt, c(0.025, 0.5, 0.975))
-ci_B <- quantile(mean_B_opt, c(0.025, 0.5, 0.975))
-opt_est <- data.frame(
-  ifrac = optimal_ifrac,
-  Subgroup = factor(c("Lower EDSS", "Higher EDSS"), levels = c("Lower EDSS", "Higher EDSS")),
-  estimate__ = c(ci_A[2], ci_B[2]),
-  lower__ = c(ci_A[1], ci_B[1]),
-  upper__ = c(ci_A[3], ci_B[3])
+# ---- Conditional gamma | tau (Vectorized) ----
+gamma_interaction <- Vectorize(function(tau) {
+  yi <- fit_interaction$data$contrast.esti
+  wi <- 1 / (fit_interaction$data$contrast.se^2 + tau^2)
+  mu <- (wi %*% yi) / sum(wi)
+  sigma <- 1 / sqrt(sum(wi))
+  ci.lb <- mu - qnorm(1 - 0.50 / 2) * sigma
+  ci.ub <- mu + qnorm(1 - 0.50 / 2) * sigma
+  exp(c(mu, ci.lb, ci.ub))
+})
+
+gamma_subgroup <- Vectorize(function(tau) {
+  y <- fit_subgroup$data$esti
+  se <- fit_subgroup$data$se
+  n <- length(y) / 2
+  sigma2 <- se^2
+  tau2_4 <- tau^2 / 4
+  V <- diag(sigma2) + kronecker(diag(n), matrix(c(tau2_4, -tau2_4, -tau2_4, tau2_4), 2))
+  W <- solve(V)
+  X <- cbind(rep(c(1, 0), n), rep(c(0, 1), n))
+  mu <- solve(t(X) %*% W %*% X) %*% (t(X) %*% W %*% y)
+  Sigma <- solve(t(X) %*% W %*% X)
+  ci.lb <- diff(mu) - qnorm(1 - 0.50 / 2) * sqrt(sum(diag(Sigma)) - 2 * Sigma[1, 2])
+  ci.ub <- diff(mu) + qnorm(1 - 0.50 / 2) * sqrt(sum(diag(Sigma)) - 2 * Sigma[1, 2])
+  exp(c(diff(mu), ci.lb, ci.ub))
+})
+
+gamma_subgroup_adj <- Vectorize(function(tau) {
+  dat <- as.data.frame(fit_subgroup_adj$data)
+  y   <- as.numeric(dat$yi)
+  se  <- as.numeric(dat$se)
+  ifrac_vec <- as.numeric(dat$ifrac)
+  n   <- length(y) / 2
+  if (n < 1) return(exp(c(NA, NA, NA)))
+  sigma2 <- se^2
+  tau2 <- tau^2
+  heterogeneity <- tau2 * matrix(c(1, 1, 1, 1), 2)
+  c_vec <- rep(c(0, 1), n) - ifrac_vec
+  C <- diag(c_vec)
+  K <- kronecker(diag(n), heterogeneity)
+  V <- diag(sigma2) + C %*% K %*% t(C)
+  W <- solve(V)
+  X <- cbind(rep(c(1, 1), n), ifrac_vec, rep(c(0, 1), n))
+  mu <- solve(t(X) %*% W %*% X) %*% (t(X) %*% W %*% y)
+  Sigma <- solve(t(X) %*% W %*% X)
+  ci.lb <- mu[3, 1] - qnorm(1 - 0.50 / 2) * sqrt(Sigma[3, 3])
+  ci.ub <- mu[3, 1] + qnorm(1 - 0.50 / 2) * sqrt(Sigma[3, 3])
+  exp(c(mu[3, 1], ci.lb, ci.ub))
+})
+
+# ---- Grid and curves ----
+model_levels <- c("Interaction-MA", "Subgroup-MA", "CAMS")
+tau <- seq(0, 1.0, length.out = 100)
+data_plot <- data.frame(
+  tau = rep(tau, 3),
+  gamma = c(gamma_interaction(tau)[1, ], gamma_subgroup(tau)[1, ], gamma_subgroup_adj(tau)[1, ]),
+  lower = c(gamma_interaction(tau)[2, ], gamma_subgroup(tau)[2, ], gamma_subgroup_adj(tau)[2, ]),
+  upper = c(gamma_interaction(tau)[3, ], gamma_subgroup(tau)[3, ], gamma_subgroup_adj(tau)[3, ]),
+  type = factor(rep(model_levels, each = length(tau)), levels = model_levels)
 )
 
-# ---- Conditional effects (ifrac x subgroup) — same as figure3_rhs ----
-ce <- conditional_effects(
-  fit_subgroup_adj,
-  effects = "ifrac:subgroup",
-  re_formula = NA,
-  prob = 0.95,
-  resolution = 200
-)
-ce_df <- as.data.frame(ce[[1L]])
-sub_col <- setdiff(names(ce_df), c("ifrac", "estimate__", "se__", "lower__", "upper__", "cond__"))
-sub_col <- sub_col[grepl("subgroup", sub_col, fixed = TRUE)][1L]
-if (is.na(sub_col)) sub_col <- names(ce_df)[2L]
-ce_df$subgroup_f <- ce_df[[sub_col]]
-subgroup_labs <- c("Lower EDSS", "Higher EDSS")
-lvls <- unique(as.character(ce_df$subgroup_f))
-if (length(lvls) >= 2L) {
-  ce_df$Subgroup <- factor(as.character(ce_df$subgroup_f), levels = lvls, labels = subgroup_labs[seq_along(lvls)])
-} else {
-  ce_df$Subgroup <- factor(ce_df$subgroup_f)
-}
+# ---- Plots ----
+x_min <- 0
+x_max <- 1.0
+common_x <- scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1), expand = expansion(mult = 0))
 
-overall_df <- ce_df %>%
-  group_by(.data$ifrac) %>%
-  summarise(estimate__ = mean(.data$estimate__), .groups = "drop")
-
-raw <- as.data.frame(fit_subgroup_adj$data)
-raw$subgroup_f <- raw$subgroup
-if (length(lvls) >= 2L) {
-  raw$Subgroup <- factor(as.character(raw$subgroup), levels = lvls, labels = subgroup_labs[seq_along(lvls)])
-} else {
-  raw$Subgroup <- factor(raw$subgroup)
-}
-raw$precision <- 1 / pmax(raw$se, 1e-6)
-
-trial_segments <- raw %>%
-  group_by(study) %>%
-  summarise(ifrac = ifrac[1], yi_1 = yi[1], yi_2 = yi[2], .groups = "drop")
-
-paper_clrs <- c("Lower EDSS" = "#FF0000", "Higher EDSS" = "#0000FF")
-lv <- levels(ce_df$Subgroup)
-clrs <- setNames(paper_clrs[lv], lv)
-if (length(clrs) == 0L) clrs <- c("#FF0000", "#0000FF")
-
-# ---- Plot: same as figure3_rhs + error bars at optimal prevalence ----
-p <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = Subgroup)) +
-  geom_ribbon(aes(ymin = lower__, ymax = upper__), alpha = 0.25, colour = NA) +
-  geom_line(linewidth = 1.2) +
-  geom_errorbar(data = opt_est, aes(x = ifrac, ymin = lower__, ymax = upper__), colour = "black", linewidth = 0.8, width = 0.02, inherit.aes = FALSE) +
-  geom_point(data = opt_est, aes(x = ifrac, y = estimate__), colour = "black", size = 3, inherit.aes = FALSE) +
-  scale_color_manual(values = clrs, name = "EDSS", na.value = "grey75") +
-  scale_fill_manual(values = clrs, name = "EDSS", na.value = "grey75") +
-  scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
-  labs(x = "Information fraction", y = "Relapse rate (RR) by baseline EDSS") +
-  scale_x_continuous(breaks = c(0.2, 0.4, 0.6)) +
-  scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
-  coord_cartesian(xlim = c(0.1, 0.8), ylim = c(-2.5, 0.2)) +
-  theme_classic(base_size = 20, base_family = "sans") +
+p_trace <- ggplot(data_plot, aes(x = tau, y = gamma, color = type, linetype = type, linewidth = type)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.05, linetype = "blank") +
+  labs(
+    x = NULL,
+    y = expression("Conditional interaction  (" ~ gamma ~ "|" ~ tau[gamma] ~ ")"),
+    title = "Interaction trace plot"
+  ) +
+  scale_color_manual(
+    values = c("Interaction-MA" = "black", "Subgroup-MA" = "#F8766D", "CAMS" = "#00BFC4"),
+    limits = model_levels, name = "Model"
+  ) +
+  scale_fill_manual(
+    values = c("Interaction-MA" = "black", "Subgroup-MA" = "#F8766D", "CAMS" = "#00BFC4"),
+    limits = model_levels, name = "Model"
+  ) +
+  scale_linetype_discrete(name = "Model") +
+  scale_linewidth_manual(
+    values = c("Interaction-MA" = 3, "Subgroup-MA" = 1.5, "CAMS" = 1.5),
+    limits = model_levels, name = "Model"
+  ) +
+  scale_y_continuous(breaks = c(1, 1.25, 1.5, 1.75)) +
+  coord_cartesian(xlim = c(x_min, x_max), ylim = c(1, 1.75)) +
+  common_x +
+  theme_classic(base_size = 22) +
   theme(
-    axis.text = element_text(size = 18),
-    axis.title = element_text(size = 18, face = "bold"),
-    legend.text = element_text(size = 18),
-    legend.title = element_text(size = 14, face = "bold"),
-    legend.key = element_rect(fill = "white", colour = NA),
-    legend.background = element_rect(fill = NA, colour = NA),
-    legend.box.background = element_blank(),
-    legend.position = "right",
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.background = element_rect(fill = "white", colour = NA)
+    legend.position = c(0.05, 0.975),
+    legend.justification = c("left", "top"),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.line.x = element_blank(),
+    plot.margin = margin(t = 0, r = 0, b = 0, l = 0),
+    panel.grid = element_blank()
   )
 
+p_dens <- ggplot(df_tau, aes(x = x, y = y)) +
+  geom_ribbon(aes(ymin = 0, ymax = y), fill = "grey50", alpha = 0.7) +
+  geom_line(linewidth = 0.8, color = "black", alpha = 0.7) +
+  labs(x = expression("Heterogeneity (" ~tau[gamma]~")"), y = "") +
+  common_x +
+  coord_cartesian(xlim = c(x_min, x_max)) +
+  theme_classic(base_size = 22) +
+  theme(
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    plot.margin = margin(t = 0, r = 5, b = 5, l = 5),
+    panel.grid = element_blank()
+  )
+
+p <- p_trace / p_dens + plot_layout(heights = c(2, 1))
 print(p)
-# ggsave("figure6_rhs.pdf", plot = p, width = 7, height = 7, units = "in")
+ggsave("figure6_rhs.pdf", plot = p, width = 8, height = 7, units = "in", device = grDevices::pdf)

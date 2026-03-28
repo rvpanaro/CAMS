@@ -18,7 +18,7 @@ map01 <- gMAP(cbind(B.n, A.n) ~ 1 | labels,
               family = binomial,
               tau.dist = "HalfNormal",
               tau.prior = 1.0,
-              iter = 2000 + 10000,
+              iter = 20000,
               beta.prior = cbind(0.0, 1.814))
 
 mplots <- plot(map01)
@@ -62,4 +62,4 @@ fp2 <- fp1$plot +
   theme(plot.margin = margin(t = 40, r = 150, b = 8, l = 40))
 
 print(fp2)
-# ggsave("figure7_lhs.pdf", plot = fp2, width = 10, height = 7, units = "in")
+ggsave("figure7_lhs.pdf", plot = fp2, width = 10, height = 7, units = "in", device = grDevices::pdf)

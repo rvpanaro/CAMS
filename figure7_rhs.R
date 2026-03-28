@@ -17,7 +17,7 @@ map01 <- gMAP(cbind(B.n, A.n) ~ 1 | labels,
               family = binomial,
               tau.dist = "HalfNormal",
               tau.prior = 1.0,
-              iter = 2000 + 10000,
+              iter = 20000,
               beta.prior = cbind(0.0, 1.814))
 
 map <- RBesT::automixfit(map01)
@@ -62,4 +62,4 @@ dens1 <- dens +
   )
 
 print(dens1)
-# ggsave("figure7_rhs.pdf", plot = dens1, width = 6, height = 6, units = "in")
+ggsave("figure7_rhs.pdf", plot = dens1, width = 6, height = 6, units = "in", device = grDevices::pdf)

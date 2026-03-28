@@ -1,5 +1,5 @@
 #
-# Figure 1 left panel (conditional effects: RR by Age vs information fraction).
+# Figure 3 left panel (conditional effects: RR by Age vs information fraction).
 # Requires: age_data.csv. Displays in RStudio Plots tab.
 #
 
@@ -29,7 +29,7 @@ if (file.exists(cache_fit)) {
     data = long_data,
     prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
       prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-    chains = 4, iter = 12000, warmup = 4000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_subgroup_adj, cache_fit)
@@ -48,7 +48,8 @@ sub_col <- setdiff(names(ce_df), c("ifrac", "estimate__", "se__", "lower__", "up
 sub_col <- sub_col[grepl("subgroup", sub_col, fixed = TRUE)][1L]
 if (is.na(sub_col)) sub_col <- names(ce_df)[2L]
 ce_df$subgroup_f <- ce_df[[sub_col]]
-age_labs <- c("<40", "≥40")
+# Internal levels avoid ASCII ">=" in legend; legend uses plotmath (see scale_*_manual labels).
+age_labs <- c("<40", "ge40")
 lvls <- unique(as.character(ce_df$subgroup_f))
 if (length(lvls) >= 2L) {
   ce_df$Age <- factor(as.character(ce_df$subgroup_f), levels = lvls, labels = age_labs[seq_along(lvls)])
@@ -74,11 +75,14 @@ trial_segments <- raw %>%
   group_by(study) %>%
   summarise(ifrac = ifrac[1], yi_1 = yi[1], yi_2 = yi[2], .groups = "drop")
 
-# Paper colours (classic red and blue): <40 = red, ≥40 = blue
-paper_clrs <- c("<40" = "#FF0000", "≥40" = "#0000FF")
+# Paper colours (classic red and blue): <40 = red, ge40 = blue
+paper_clrs <- c("<40" = "#FF0000", ge40 = "#0000FF")
 lv <- levels(ce_df$Age)
 clrs <- setNames(paper_clrs[lv], lv)
 if (length(clrs) == 0L) clrs <- c("#FF0000", "#0000FF")
+age_legend_labels <- lapply(lv, function(lvl) {
+  switch(as.character(lvl), ge40 = expression(phantom() >= 40), `<40` = expression(phantom() < 40), lvl)
+})
 
 p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Age, fill = Age)) +
   geom_ribbon(aes(ymin = lower__, ymax = upper__), alpha = 0.25, colour = NA) +
@@ -86,14 +90,16 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Age, fill = Age)) 
   geom_line(data = overall_df, aes(x = ifrac, y = estimate__), colour = "black", linewidth = 1.2, linetype = "dashed", inherit.aes = FALSE) +
   geom_segment(data = trial_segments, aes(x = ifrac, xend = ifrac, y = yi_1, yend = yi_2), colour = "grey75", linewidth = 1, inherit.aes = FALSE) +
   geom_point(data = raw, aes(x = ifrac, y = yi, color = Age, size = precision), alpha = 0.35, inherit.aes = FALSE) +
-  scale_color_manual(values = clrs, name = "Age", na.value = "grey75") +
-  scale_fill_manual(values = clrs, name = "Age", na.value = "grey75") +
+  scale_color_manual(values = clrs, name = "Age", na.value = "grey75", labels = age_legend_labels) +
+  scale_fill_manual(values = clrs, name = "Age", na.value = "grey75", labels = age_legend_labels) +
   scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
-  labs(x = "Information fraction", y = "Relapse rate (RR) by Age") +
-  scale_x_continuous(breaks = c(0.2, 0.4, 0.6)) +
+  labs(
+    x = expression(Information~fraction~(age >= 40)),
+    y = "Relapse rate (RR) by age"
+  ) +
+  scale_x_continuous(breaks = seq(0.3, 0.55, by = 0.05)) +
   scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
   coord_cartesian(xlim = c(0.25, 0.55), ylim = c(-1.6, 0.2)) +
-  # Theme and size from aggregation_bias_plot1 (viz_theme.R + viz_condeffect.R): 7 x 7 in
   theme_classic(base_size = 20, base_family = "sans") +
   theme(
     axis.text = element_text(size = 18),
@@ -110,5 +116,4 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Age, fill = Age)) 
   )
 
 print(p_out)
-# To save at paper size (same as img/aggregation_bias_plot1): uncomment:
-# ggsave("figure1_lhs.pdf", plot = p_out, width = 7, height = 7, units = "in")
+ggsave("figure3_lhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)

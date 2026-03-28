@@ -1,12 +1,12 @@
 #
-# Figure 4 (bottom): EDSS-based three-panel forest plot (Interaction-MA, Subgroup-MA, CAMS + Overall).
+# Figure 5 (bottom): EDSS-based three-panel forest plot (Interaction-MA, Subgroup-MA, CAMS + Overall).
 # Self-contained. Requires: edss_data.csv. Uses fit_overall_*.rds and
 # reuses fit_subgroup*.rds, fit_interaction*.rds, fit_*.rds (from other figure scripts).
 # Needs: brms, ggplot2, dplyr, patchwork, gtable, grid, ckbplotr, metafor, ggtext.
 #
 
-# ---- Helper: run one Figure 4 (three-panel plot) for a given dataset ----
-run_figure4 <- function(csv_file, prefix, subgroup_names) {
+# ---- Helper: run one Figure 5 (three-panel plot) for a given dataset ----
+run_figure5 <- function(csv_file, prefix, subgroup_names) {
   if (!file.exists(csv_file)) stop(csv_file, " not found. Set wd to the project folder.")
   set.seed(1)
   library(brms)
@@ -55,7 +55,7 @@ run_figure4 <- function(csv_file, prefix, subgroup_names) {
       esti | se(se) ~ 1 + subgroup + (-1 + subgroup12 | study.name),
       data = long_data,
       prior = prior(normal(0, 0.5), class = sd),
-      chains = 4, iter = 12000, warmup = 4000, seed = 1,
+      chains = 4, iter = 20000, warmup = 6000, seed = 1,
       control = list(adapt_delta = 0.999, max_treedepth = 15)
     )
     saveRDS(fit_subgroup, cache_subgroup)
@@ -68,7 +68,7 @@ run_figure4 <- function(csv_file, prefix, subgroup_names) {
       contrast.esti | se(contrast.se) ~ 1 + (1 | study.name),
       data = wide_data,
       prior = prior(normal(0, 0.5), class = sd),
-      chains = 4, iter = 12000, warmup = 4000, seed = 1,
+      chains = 4, iter = 20000, warmup = 6000, seed = 1,
       control = list(adapt_delta = 0.999, max_treedepth = 15)
     )
     saveRDS(fit_interaction, cache_interaction)
@@ -82,7 +82,7 @@ run_figure4 <- function(csv_file, prefix, subgroup_names) {
       data = long_data,
       prior = prior(normal(0, 1), class = sd, coef = "Intercept", group = "study") +
         prior(normal(0, 0.5), class = sd, coef = "ifrac2", group = "study"),
-      chains = 4, iter = 12000, warmup = 4000, seed = 1,
+      chains = 4, iter = 20000, warmup = 6000, seed = 1,
       control = list(adapt_delta = 0.999, max_treedepth = 15)
     )
     saveRDS(fit_subgroup_adj, cache_adj)
@@ -95,7 +95,7 @@ run_figure4 <- function(csv_file, prefix, subgroup_names) {
       overall.esti | se(overall.se) ~ 1 + (1 | study.name),
       data = wide_data,
       prior = prior(normal(0, 1), class = sd),
-      chains = 4, iter = 12000, warmup = 4000, seed = 1,
+      chains = 4, iter = 20000, warmup = 6000, seed = 1,
       control = list(adapt_delta = 0.999, max_treedepth = 15)
     )
     saveRDS(fit_overall, cache_overall)
@@ -281,13 +281,12 @@ run_figure4 <- function(csv_file, prefix, subgroup_names) {
 # ---- Run for EDSS (bottom panel) ----
 if (!file.exists("edss_data.csv")) stop("edss_data.csv not found. Set wd to the project folder.")
 
-out_edss <- run_figure4("edss_data.csv", "edss", c("Lower EDSS", "Higher EDSS"))
+out_edss <- run_figure5("edss_data.csv", "edss", c("Lower EDSS", "Higher EDSS"))
 
 plot(out_edss$final_plot)
 
-# Optional: save (uncomment to write PDF for bottom panel)
 ggsave(
-  filename = "figure4_bottom.pdf",
+  filename = "figure5_bottom.pdf",
   plot = out_edss$final_plot,
   width = 17,
   height = 5,

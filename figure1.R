@@ -40,7 +40,7 @@ if (file.exists(cache_subgroup)) {
     esti | se(se) ~ 1 + subgroup + (-1 + subgroup12 | study.name),
     data = long_data,
     prior = prior(normal(0, 0.5), class = sd),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_subgroup, cache_subgroup)
@@ -55,7 +55,7 @@ if (file.exists(cache_interaction)) {
     contrast.esti | se(contrast.se) ~ 1 + (1 | study.name),
     data = wide_data,
     prior = prior(normal(0, 0.5), class = sd),
-    chains = 4, iter = 4000, warmup = 2000, seed = 1,
+    chains = 4, iter = 20000, warmup = 6000, seed = 1,
     control = list(adapt_delta = 0.999, max_treedepth = 15)
   )
   saveRDS(fit_interaction, cache_interaction)
@@ -133,5 +133,4 @@ fp1 <- interaction_forest_plot(
 fp1 <- gtable::gtable_add_padding(fp1$figure, padding = unit(c(10, 0, 0, 0), "mm"))
 plot(fp1)
 
-# Optional: save
-# ggsave("figure1.pdf", plot = fp1, width = 17, height = 10, units = "in")
+ggsave("figure1.pdf", plot = fp1, width = 17, height = 10, units = "in", device = grDevices::pdf)
