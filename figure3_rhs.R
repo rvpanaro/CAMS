@@ -57,9 +57,16 @@ if (length(lvls) >= 2L) {
   ce_df$Subgroup <- factor(ce_df$subgroup_f)
 }
 
+
 overall_df <- ce_df %>%
-  group_by(.data$ifrac) %>%
-  summarise(estimate__ = mean(.data$estimate__), .groups = "drop")
+  group_by(ifrac) %>%
+  summarise(
+    estimate__ =
+      (1 - first(ifrac)) * estimate__[as.character(subgroup_f) == "A"] +
+      first(ifrac) * estimate__[as.character(subgroup_f) == "B"],
+    .groups = "drop"
+  )
+
 
 raw <- as.data.frame(fit_subgroup_adj$data)
 raw$subgroup_f <- raw$subgroup
@@ -81,7 +88,7 @@ lv <- levels(ce_df$Subgroup)
 clrs <- setNames(paper_clrs[lv], lv)
 if (length(clrs) == 0L) clrs <- c("#FF0000", "#0000FF")
 edss_legend_labels <- lapply(lv, function(lvl) {
-  switch(as.character(lvl), ge35 = expression(phantom() >= 3.5), `<3.5` = expression(phantom() < 3.5), lvl)
+  switch(as.character(lvl), ge35 = expression("Higher EDSS"), `<3.5` = expression("Lower EDSS"), lvl)
 })
 
 p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = Subgroup)) +
@@ -94,8 +101,8 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = S
   scale_fill_manual(values = clrs, name = "EDSS", na.value = "grey75", labels = edss_legend_labels) +
   scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
   labs(
-    x = expression(Information~fraction~("EDSS" >= 3.5)),
-    y = "Relapse rate (RR) by baseline EDSS"
+    x = expression(Information~fraction~("Higher EDSS")),
+    y = "Log relapse rate ratio (log RR) by baseline EDSS"
   ) +
   scale_x_continuous(breaks = c(0.2, 0.4, 0.6)) +
   scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
@@ -116,4 +123,4 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = S
   )
 
 print(p_out)
-ggsave("figure3_rhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure3_rhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)

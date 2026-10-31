@@ -286,7 +286,7 @@ out_edss <- run_figure5("edss_data.csv", "edss", c("Lower EDSS", "Higher EDSS"))
 plot(out_edss$final_plot)
 
 ggsave(
-  filename = "figure5_bottom.pdf",
+  filename = "figures/figure5_bottom.pdf",
   plot = out_edss$final_plot,
   width = 17,
   height = 5,

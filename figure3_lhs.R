@@ -57,9 +57,16 @@ if (length(lvls) >= 2L) {
   ce_df$Age <- factor(ce_df$subgroup_f)
 }
 
+
 overall_df <- ce_df %>%
-  group_by(.data$ifrac) %>%
-  summarise(estimate__ = mean(.data$estimate__), .groups = "drop")
+  group_by(ifrac) %>%
+  summarise(
+    estimate__ =
+      (1 - first(ifrac)) * estimate__[as.character(subgroup_f) == "A"] +
+      first(ifrac) * estimate__[as.character(subgroup_f) == "B"],
+    .groups = "drop"
+  )
+
 
 raw <- as.data.frame(fit_subgroup_adj$data)
 raw$subgroup_f <- raw$subgroup
@@ -95,7 +102,7 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Age, fill = Age)) 
   scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
   labs(
     x = expression(Information~fraction~(age >= 40)),
-    y = "Relapse rate (RR) by age"
+    y = "Log relapse rate ratio (log RR) by age"
   ) +
   scale_x_continuous(breaks = seq(0.3, 0.55, by = 0.05)) +
   scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
@@ -116,4 +123,4 @@ p_out <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Age, fill = Age)) 
   )
 
 print(p_out)
-ggsave("figure3_lhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure3_lhs.pdf", plot = p_out, width = 7, height = 7, units = "in", device = grDevices::pdf)

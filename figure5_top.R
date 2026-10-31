@@ -286,7 +286,7 @@ out_age <- run_figure5("age_data.csv", "age", c("Younger", "Older"))
 plot(out_age$final_plot)
 
 ggsave(
-  filename = "figure5_top.pdf",
+  filename = "figures/figure5_top.pdf",
   plot = out_age$final_plot,
   width = 17,
   height = 5,

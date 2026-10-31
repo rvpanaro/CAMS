@@ -97,4 +97,4 @@ p1 <- ggplot(df_delta, aes(x = x, y = y)) +
   )
 
 print(p1)
-ggsave("figure6_center.pdf", plot = p1, width = 8, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure6_center.pdf", plot = p1, width = 8, height = 7, units = "in", device = grDevices::pdf)

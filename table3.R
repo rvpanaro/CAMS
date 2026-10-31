@@ -1,5 +1,5 @@
 #
-# Table 2: Comparison of methods for choosing information fraction (IF) — EDSS example.
+# Table 3: Comparison of methods for choosing information fraction (IF) — EDSS example.
 # Matches paper: Overall-IF, Optimal/optimistic IF, Closer to Subgroups, Average (naive),
 # Trial-weighted, Clinical Expertise, MAP prevalence. Reproducible (set.seed(1), seed=1 in brm).
 #
@@ -279,16 +279,16 @@ tab <- data.frame(
 )
 
 # ---- Write CSV ----
-write.csv(tab, "table2.csv", row.names = FALSE)
+write.csv(tab, "tables/table3.csv", row.names = FALSE)
 
 # ---- Write LaTeX ----
 xtable(tab)
 
 # ---- Print ----
-cat("\n-------- Table 2: Methods for choosing information fraction (IF), EDSS example --------\n\n")
+cat("\n-------- Table 3: Methods for choosing information fraction (IF), EDSS example --------\n\n")
 cat("Reproducible: set.seed(1), seed=1 in brm. Grid length =", length(ifrac_grid), "\n")
 cat("* overall-IF: mean (SD in parentheses); ** Beta(5, 21) mean (SD).\n\n")
 print(tab)
 cat("\n* overall-IF (mean and standard deviation)\n")
 cat("** MAP prevalence: Beta(5, 21) mean and standard deviation.\n")
-cat("\nTable 2 saved to table2.csv\n")
+cat("\nTable 3 saved to table2.csv\n")

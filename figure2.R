@@ -133,4 +133,4 @@ fp1 <- interaction_forest_plot(
 fp1 <- gtable::gtable_add_padding(fp1$figure, padding = unit(c(10, 0, 0, 0), "mm"))
 plot(fp1)
 
-ggsave("figure2.pdf", plot = fp1, width = 17, height = 10, units = "in", device = grDevices::pdf)
+ggsave("figures/figure2.pdf", plot = fp1, width = 17, height = 10, units = "in", device = grDevices::pdf)

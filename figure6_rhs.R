@@ -175,4 +175,4 @@ p_dens <- ggplot(df_tau, aes(x = x, y = y)) +
 
 p <- p_trace / p_dens + plot_layout(heights = c(2, 1))
 print(p)
-ggsave("figure6_rhs.pdf", plot = p, width = 8, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure6_rhs.pdf", plot = p, width = 8, height = 7, units = "in", device = grDevices::pdf)

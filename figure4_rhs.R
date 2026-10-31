@@ -1,5 +1,5 @@
 #
-# Figure 4 right: Relapse rate (RR) by baseline EDSS — same as figure3_rhs (conditional
+# Figure 4 right: Log relapse rate ratio (log RR) — same as figure3_rhs (conditional
 # effects with 95% CrI). Error bars show subgroup estimates at the optimal prevalence
 # (IF that minimizes total credible interval width). Requires: edss_data.csv. Reuses fit_edss.rds.
 #
@@ -107,7 +107,7 @@ paper_clrs <- c("<3.5" = "#FF0000", ge35 = "#0000FF")
 clrs <- setNames(paper_clrs[lv], lv)
 if (length(clrs) == 0L) clrs <- c("#FF0000", "#0000FF")
 edss_legend_labels <- lapply(lv, function(lvl) {
-  switch(as.character(lvl), ge35 = expression(phantom() >= 3.5), `<3.5` = expression(phantom() < 3.5), lvl)
+  switch(as.character(lvl), ge35 = expression("Higher EDSS"), `<3.5` = expression("Lower EDSS"), lvl)
 })
 
 opt_dodge <- position_dodge(width = 0.025)
@@ -130,8 +130,8 @@ p <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = Subgr
   scale_fill_manual(values = clrs, name = "EDSS", na.value = "grey75", labels = edss_legend_labels) +
   scale_size_continuous(range = c(2.5, 6.5), guide = "none") +
   labs(
-    x = expression(Information~fraction~("EDSS" >= 3.5)),
-    y = "Relapse rate (RR) by baseline EDSS"
+    x = expression(Information~fraction~("Higher EDSS")),
+    y = "Log relapse rate ratio (log RR)"
   ) +
   scale_x_continuous(breaks = c(0.2, 0.3, 0.4, 0.5, 0.6)) +
   scale_y_continuous(breaks = c(0, -0.5, -1.0, -1.5, -2.0, -2.5)) +
@@ -152,4 +152,4 @@ p <- ggplot(ce_df, aes(x = ifrac, y = estimate__, color = Subgroup, fill = Subgr
   )
 
 print(p)
-ggsave("figure4_rhs.pdf", plot = p, width = 7, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure4_rhs.pdf", plot = p, width = 7, height = 7, units = "in", device = grDevices::pdf)

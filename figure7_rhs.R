@@ -62,4 +62,4 @@ dens1 <- dens +
   )
 
 print(dens1)
-ggsave("figure7_rhs.pdf", plot = dens1, width = 6, height = 6, units = "in", device = grDevices::pdf)
+ggsave("figures/figure7_rhs.pdf", plot = dens1, width = 6, height = 6, units = "in", device = grDevices::pdf)

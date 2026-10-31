@@ -62,4 +62,4 @@ fp2 <- fp1$plot +
   theme(plot.margin = margin(t = 40, r = 150, b = 8, l = 40))
 
 print(fp2)
-ggsave("figure7_lhs.pdf", plot = fp2, width = 10, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure7_lhs.pdf", plot = fp2, width = 10, height = 7, units = "in", device = grDevices::pdf)

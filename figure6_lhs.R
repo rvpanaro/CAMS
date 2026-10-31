@@ -131,5 +131,5 @@ p2 <- ggplot(df_plot, aes(y = value)) +
   ylim(0, 3)
 
 print(p2)
-ggsave("figure6_lhs.pdf", plot = p2, width = 8, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure6_lhs.pdf", plot = p2, width = 8, height = 7, units = "in", device = grDevices::pdf)
 

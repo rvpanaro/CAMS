@@ -73,7 +73,7 @@ p <- ggplot(df_curve, aes(x = ifrac, y = width)) +
                colour = "#FF0000", linetype = "dashed", linewidth = 0.8, inherit.aes = FALSE) +
   labs(
     title = "Minimizing credible interval width",
-    x = "Information fraction",
+    x = expression(Information~fraction~("Higher EDSS")),
     y = "Total credible interval width"
   ) +
   scale_x_continuous(breaks = c(0.2, 0.4, 0.6)) +
@@ -86,4 +86,4 @@ p <- ggplot(df_curve, aes(x = ifrac, y = width)) +
   )
 
 print(p)
-ggsave("figure4_lhs.pdf", plot = p, width = 7, height = 7, units = "in", device = grDevices::pdf)
+ggsave("figures/figure4_lhs.pdf", plot = p, width = 7, height = 7, units = "in", device = grDevices::pdf)

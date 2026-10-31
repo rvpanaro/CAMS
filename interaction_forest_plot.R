@@ -226,14 +226,14 @@ interaction_forest_plot <-
     resultsB$shape[resultsB$bold] <- 18
 
     col.left <- NULL
-    col.left.heading <- ""
+    left.heading <- ""
 
     if (all(treat.total != "")) {
       resultsA$treat <- c(paste0(treat.events, "/", treat.total),
                           rep("", nrow(resultsA) - length(treat.total)))
       resultsA$cont <- c(paste0(cont.events, "/", cont.total),
                          rep("", nrow(resultsA) - length(treat.total)))
-      col.left.heading_list1 <- list(c("Control \n (n/N)", "Treatment \n (n/N)"), c("", ""))
+      left.heading_list1 <- list(c("Control \n (n/N)", "Treatment \n (n/N)"), c("", ""))
     }
     if (!is.null(resultsA$treat)) {
       resultsA$treat[resultsA$treat == "0/0"] <- ""
@@ -243,21 +243,21 @@ interaction_forest_plot <-
     if (all(total != "")) {
       resultsA$prev <- c(paste0("       ", subgroup.total, " (", round(subgroup.total / total * 100, digits = 0), "%)"),
                          rep("", nrow(resultsA) - length(total)))
-      col.left.heading_list2 <- list(paste0("Prevalence \n (n/N)"), "")
+      left.heading_list2 <- list(paste0("Prevalence \n (n/N)"), "")
     }
 
     if (all(treat.total != "") & !all(total != "")) {
       col.left = c("cont", "treat")
-      col.left.heading <- col.left.heading_list1
+      left.heading <- left.heading_list1
     } else if (!all(treat.total != "") & all(total != "")) {
       col.left = c("prev")
-      col.left.heading <- col.left.heading_list2
+      left.heading <- left.heading_list2
     } else if (all(treat.total != "") & all(total != "")) {
       col.left = c("cont", "treat", "prev")
-      col.left.heading <- c(col.left.heading_list1[[1]], col.left.heading_list2)
+      left.heading <- c(left.heading_list1[[1]], left.heading_list2)
     } else {
       col.left <- NULL
-      col.left.heading <- ""
+      left.heading <- ""
     }
 
     resultsB$treat <- resultsB$cont <- resultsB$prev <- ""
@@ -314,8 +314,8 @@ interaction_forest_plot <-
         panels = panels_to_use,
         col.key = "variable", col.estimate = "yi",
         col.lci = "ci.lb", col.uci = "ci.ub",
-        col.right.heading = col_right_heading,
-        col.heading.space = 1,
+        right.heading = col_right_heading,
+        heading.space = 1,
         row.labels = row_labels,
         row.labels.space = row.labels.space,
         xlab = xlab,
@@ -325,7 +325,7 @@ interaction_forest_plot <-
         shape = "shape",
         colour = "colour",
         col.left = col.left,
-        col.left.heading = col.left.heading,
+        left.heading = left.heading,
         bold.labels = bold,
         pointsize = pointsize,
         envir = environment(),
