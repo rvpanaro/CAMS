@@ -101,3 +101,14 @@ Point `brms` at CmdStan if needed: `options(brms.backend = "cmdstan")`.
 | Table 4 (Frequentist age + EDSS) | `table4.R` | `tables/table4.csv` |
 
 Optional local caches (gitignored): `fit_*.rds` produced on first run of figure or table scripts.
+
+## Optional submission cache (Zenodo / supplementary zip)
+
+For **fast reproduction** without long `brms` refits, use the companion archive **`CAMS-submission-cache.zip`** (upload to Zenodo and link here when available). It contains:
+
+- All 10 `fit_*.rds` files used by the figure and table scripts  
+- Reference `tables/table3.csv` and `tables/table4.csv` from the submitted run  
+
+**Install:** clone [GitHub CAMS](https://github.com/rvpanaro/CAMS), set `wd` to that folder, unzip the cache into it (`.rds` in the project root; CSVs under `tables/`). See `CACHE_README.txt` in the zip.
+
+**Quick check:** `Rscript table3.R` and `Rscript table4.R`, then compare `tables/*.csv` to the reference copies in the zip.
