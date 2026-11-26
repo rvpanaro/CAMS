@@ -318,6 +318,7 @@ interaction_forest_plot <-
         heading.space = 1,
         row.labels = row_labels,
         row.labels.space = row.labels.space,
+        row.labels.element = "ggtext::element_markdown",
         xlab = xlab,
         showcode = FALSE,
         digits = digits,
