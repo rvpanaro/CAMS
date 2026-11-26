@@ -35,7 +35,7 @@ Install these from CRAN before running any script:
 | `metafor` | Frequentist CAMS (`table4.R`, forest plots) |
 | `RBesT` | Figure 7 (`gMAP`, prevalence) |
 | `dplyr`, `ggplot2`, `scales`, `patchwork`, `gtable`, `grid`, `magrittr` | Data wrangling and figures |
-| `ggtext`, `gghalves` | Figure labels / half-violin panels |
+| `ggtext` | Forest-plot row labels (`interaction_forest_plot.R`) |
 | `xtable` | LaTeX table output in `table3.R` |
 
 One-shot install:
@@ -43,11 +43,20 @@ One-shot install:
 ```r
 install.packages(c(
   "brms", "metafor", "RBesT", "dplyr", "ggplot2", "scales", "patchwork",
-  "gtable", "magrittr", "ggtext", "gghalves", "xtable"
+  "gtable", "magrittr", "ggtext", "xtable"
 ))
 ```
 
-### Not on CRAN (required for Figures 1, 5, and `interaction_forest_plot.R`)
+### Not on CRAN (required for Figures 1, 5, 6, and `interaction_forest_plot.R`)
+
+`gghalves` was removed from CRAN in December 2025 (last release **0.1.4**). Install that release from the CRAN archive:
+```r
+install.packages(
+  "https://cran.r-project.org/src/contrib/Archive/gghalves/gghalves_0.1.4.tar.gz",
+  repos = NULL,
+  type = "source"
+)
+```
 
 **`ckbplotr`** — install from the [neilstats R-universe](https://neilstats.r-universe.dev/ckbplotr) (or [GitHub `neilstats/ckbplotr`](https://github.com/neilstats/ckbplotr)):
 
@@ -102,13 +111,19 @@ Point `brms` at CmdStan if needed: `options(brms.backend = "cmdstan")`.
 
 Optional local caches (gitignored): `fit_*.rds` produced on first run of figure or table scripts.
 
-## Optional submission cache (Zenodo / supplementary zip)
+## Optional submission cache (precomputed fits)
 
-For **fast reproduction** without long `brms` refits, use the companion archive **`CAMS-submission-cache.zip`** (upload to Zenodo and link here when available). It contains:
+The git repository and the Zenodo source archive **do not** include the large `fit_*.rds` files (they are gitignored). For **fast reproduction** without long `brms` refits, download the companion archive from **GitHub Release assets**:
+
+**Download:** [CAMS-submission-cache.zip](https://github.com/rvpanaro/CAMS/releases/download/v1.0.0/CAMS-submission-cache.zip)  
+**Also:** [Releases → v1.0.0 → Assets](https://github.com/rvpanaro/CAMS/releases/tag/v1.0.0) (file `CAMS-submission-cache.zip`).
+
+The archive contains:
 
 - All 10 `fit_*.rds` files used by the figure and table scripts  
 - Reference `tables/table3.csv` and `tables/table4.csv` from the submitted run  
+- `CACHE_README.txt`
 
-**Install:** clone [GitHub CAMS](https://github.com/rvpanaro/CAMS), set `wd` to that folder, unzip the cache into it (`.rds` in the project root; CSVs under `tables/`). See `CACHE_README.txt` in the zip.
+**Install:** download or clone [CAMS](https://github.com/rvpanaro/CAMS), set R’s working directory to that folder, unzip the cache into it (`.rds` in the project root; CSVs under `tables/`).
 
 **Quick check:** `Rscript table3.R` and `Rscript table4.R`, then compare `tables/*.csv` to the reference copies in the zip.
